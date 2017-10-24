@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
-import { Platform } from 'ionic-angular';
-import { Geolocation } from '@ionic-native/geolocation';
+import { GeolocationService } from '../../app/geolocation/geolocation.service';
+import { BackgroundGeolocationResponse } from '@ionic-native/background-geolocation';
+
+import { LocalNotifications } from '@ionic-native/local-notifications';
 
 @Component({
   selector: 'page-home',
@@ -9,41 +11,73 @@ import { Geolocation } from '@ionic-native/geolocation';
 })
 export class HomePage {
 
-  coordinates: any;
+  coordinates: any[];
+  backgroundCoordinates: any[];
   test: string;
+  backgroundTrackingEnabled: boolean;
 
-  constructor(public navCtrl: NavController,
-              protected geoLocation: Geolocation,
-              protected platform: Platform) {
+  constructor (public navCtrl: NavController,
+              public geolocation: GeolocationService,
+              private localNotifications: LocalNotifications) {
+      
+    this.coordinates = [];
+    this.backgroundCoordinates = [];
 
-      platform.ready().then(() => {
-        this.initGeoloc();
+    this.geolocation.locationWatcher.subscribe((data) => {
+      if (data.coords && data.coords.latitude) {
+        this.coordinates.push(data.coords);
+      }
+    })
+
+    this.geolocation.backgroundLocationWatcher
+    .subscribe((location: BackgroundGeolocationResponse) => {
+  
+      if (location) {
+        this.backgroundCoordinates.push({
+          latitude: location.latitude,
+          longitude: location.longitude
+        });
+      }
+
+      this.localNotifications.schedule({
+        id: 1,
+        title: "Legendary Pokemon found",
+        text: location.latitude + ' ' + location.longitude
       });
+  
+      // IMPORTANT:  You must execute the finish method here to inform the native plugin that you're finished,
+      // and the background-task may be completed.  You must do this regardless if your HTTP request is successful or not.
+      // IF YOU DON'T, ios will CRASH YOUR APP for spending too much time in the background.
+      this.geolocation.finishBackgroundPositionTrackingTask(); // FOR IOS ONLY
+    });
+
   }
 
-  private initGeoloc() {
+  public startWatching(): void {
+    this.geolocation.startBackgroundPositionTracking();
+  }
 
-    let watchOptions = {
-      enableHighAccuracy: true, 
-      timeout: 20000, 
-      maximumAge: 1200
-    }
+  public stopWatching(): void {
+    this.geolocation.stopBackgroundPositionTracking();
+  }
 
-    let watch = this.geoLocation.watchPosition(watchOptions);
-    watch.subscribe((data) => {
-      if (data.coords && data.coords.latitude) {
-        this.coordinates = data.coords;
-      }
+  public scheduleNotification(): void {
+    this.localNotifications.schedule({
+      id: 1,
+      title: "Manually triggered Notification",
+      text: "HUi",
+      at: new Date(new Date().getTime()),
+      led: 'FF0000',
+      sound: null
     });
   }
 
-  public clicked() {
-    console.log('hi');
-
-    this.geoLocation.getCurrentPosition().then((data) => {
-      console.log(data.coords);
-    }).catch((err) => {
-      console.log(err.message);
-    })
+  public updateBackgroundTracking(): void {
+    if (this.backgroundTrackingEnabled) {
+      this.geolocation.startBackgroundPositionTracking();
+    } else {
+      this.geolocation.stopBackgroundPositionTracking();
+    }
   }
+
 }

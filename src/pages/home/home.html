@@ -14,12 +14,25 @@
     If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will show you the way.
   </p>
 
-  <p>{{coordinates}}</p>
+  <ion-item>
+    <ion-label>Background Tracking:</ion-label>
+    <ion-checkbox [(ngModel)]="backgroundTrackingEnabled" (ionChange)="updateBackgroundTracking()"></ion-checkbox>
+  </ion-item>
 
-  <ul *ngIf="coordinates">
-  <li>Latitude: {{coordinates.latitude}}</li>
-  <li>Longitude: {{coordinates.longitude}}</li>
+  <button ion-button round outline (click)="scheduleNotification()">Schedule Notification</button>
+
+  <ul *ngIf="coordinates.length > 0">
+      <li *ngFor="let coordinate of coordinates">
+        {{ coordinate.longitude }} is {{ coordinate.latitude }}
+      </li>
   </ul>
+
+  <h3>Background</h3>
+  <ul *ngIf="backgroundCoordinates.length > 0">
+    <li *ngFor="let coordinate of backgroundCoordinates">
+      {{ coordinate.longitude }} is {{ coordinate.latitude }}
+    </li>
+</ul>
 
   <button ion-button secondary menuToggle>Toggle Menu</button>
 

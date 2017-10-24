@@ -2,9 +2,13 @@ import { Component, ViewChild } from '@angular/core';
 import { Nav, Platform } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
+import { LocalNotifications } from '@ionic-native/local-notifications';
+import { BackgroundGeolocation, BackgroundGeolocationConfig, BackgroundGeolocationResponse } from '@ionic-native/background-geolocation';
+import { GeolocationService } from './geolocation/geolocation.service';
 
 import { HomePage } from '../pages/home/home';
 import { ListPage } from '../pages/list/list';
+import { LoadingPage } from '../pages/loading/loading';
 
 @Component({
   templateUrl: 'app.html'
@@ -12,17 +16,21 @@ import { ListPage } from '../pages/list/list';
 export class MyApp {
   @ViewChild(Nav) nav: Nav;
 
-  rootPage: any = HomePage;
+  rootPage: any = LoadingPage;
 
   pages: Array<{title: string, component: any}>;
 
   constructor(public platform: Platform, 
               public statusBar: StatusBar, 
-              public splashScreen: SplashScreen) {
+              public splashScreen: SplashScreen,
+              public geolocationService: GeolocationService,
+              private backgroundGeolocation: BackgroundGeolocation,
+              private localNotifications: LocalNotifications) {
     this.initializeApp();
 
     // used for an example of ngFor and navigation
     this.pages = [
+      { title: 'Loading', component: LoadingPage },
       { title: 'Home', component: HomePage },
       { title: 'List', component: ListPage }
     ];
@@ -35,6 +43,9 @@ export class MyApp {
       // Here you can do any higher level native things you might need.
       this.statusBar.styleDefault();
       this.splashScreen.hide();
+      this.localNotifications.registerPermission();
+      this.geolocationService.registerBackgroundGeolocationWatcher();
+      this.geolocationService.registerGeolocationWatcher();
     });
   }
 
